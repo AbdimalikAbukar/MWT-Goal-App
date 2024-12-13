@@ -4,7 +4,7 @@ const ensureAuthenticated = (req, res, next) => {
   const token = req.cookies.authToken;
 
   if (!token) {
-    return res.redirect("/api/auth/not-logged-in"); // Redirect to "Not Logged In" page
+    return res.redirect("/api/auth/not-logged-in");
   }
 
   try {
