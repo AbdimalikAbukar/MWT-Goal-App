@@ -3,7 +3,6 @@ const {
   sendFriendReq,
   acceptFriendReq,
   getFriends,
-  removeFriends,
   renderAddFriendForm,
   renderConfirmRemoveFriend,
   declineFriendRequest,
@@ -17,7 +16,6 @@ const router = express.Router();
 // Apply auth middleware to all routes
 router.use(authMiddleware);
 
-/** ----------- Friend Management Routes ----------- **/
 // Send a friend request
 router.post("/request", sendFriendReq);
 
@@ -27,13 +25,12 @@ router.put("/accept/:requestId", acceptFriendReq);
 // Get the list of friends
 router.get("/", getFriends);
 
-// Remove a friend based on friendId (not requestId)
+// Remove a friend based on friendId
 router.delete("/:friendId", async (req, res) => {
   try {
     const { friendId } = req.params;
     const userId = req.user.id;
 
-    // Log for debugging
     console.log(
       "Attempting to remove friend. User ID:",
       userId,
@@ -41,28 +38,24 @@ router.delete("/:friendId", async (req, res) => {
       friendId
     );
 
-    // Find the friendship by friendId
     const friendRelationship = await Friend.findOne({
       $or: [
         { user: userId, friend: friendId },
         { user: friendId, friend: userId },
       ],
-      status: "accepted", // Only delete accepted friendships
+      status: "accepted",
     });
 
-    // Log for debugging
     console.log("Friendship found:", friendRelationship);
 
     if (!friendRelationship) {
       return res.status(404).send("Friendship not found or not accepted");
     }
 
-    // Remove the friendship (either the user or friend can delete it)
     await Friend.findOneAndDelete({
       _id: friendRelationship._id,
     });
 
-    // Send response or redirect to the friends list
     res.redirect("/api/friends");
   } catch (error) {
     console.error("Error deleting friend:", error);
@@ -70,38 +63,33 @@ router.delete("/:friendId", async (req, res) => {
   }
 });
 
-/** ----------- Friend Form Rendering Routes ----------- **/
-// Render the "Add Friend" form
+// Render the Add Friend form
 router.get("/add", renderAddFriendForm);
 
-// Render the "Confirm Remove Friend" form
+// Render the Confirm Remove Friend form
 router.get("/confirm_remove/:friendId", renderConfirmRemoveFriend);
 
-/** ----------- Goal Sharing Route ----------- **/
 // Route for sharing a goal with friends
 router.get("/share/:goalId", async (req, res) => {
   try {
     const goalId = req.params.goalId;
     const userId = req.user.id;
 
-    // Fetch the current user's accepted friends
     const friends = await Friend.find({ user: userId })
-      .populate("friend", "username email") // Populate friend details
+      .populate("friend", "username email")
       .where("status")
-      .equals("accepted"); // Only show accepted friends
+      .equals("accepted");
 
     if (!friends.length) {
       return res.status(404).send("No friends found for sharing the goal.");
     }
 
-    // Fetch the goal to be shared
     const goal = await Goal.findById(goalId);
 
     if (!goal) {
       return res.status(404).send("Goal not found.");
     }
 
-    // Render the "share_goal" template
     res.render("share_goal", {
       goal,
       friends,

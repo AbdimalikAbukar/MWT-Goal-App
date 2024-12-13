@@ -6,7 +6,7 @@ block content
     .login
         h1 Login to Aspire
         .loginForm
-            //- Form for logging in
+         
             form(method="POST", action="/api/auth/login")
                 .form-group
                     label(for="email") Email:
@@ -26,11 +26,11 @@ block content
 
                 input.btn.btn-primary(type="submit", value="Login")
 
-            //- Link to "Forgot Password"
+           
             p
                 a(href="/api/auth/forgot-password") Forgot your password?
 
-            //- Link to register if the user does not have an account
+           
             p
                 a(href="/api/auth/register") Don't have an account? Register
 

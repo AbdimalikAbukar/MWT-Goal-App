@@ -3,10 +3,8 @@ const router = express.Router();
 const authMiddleware = require("../authMiddleware");
 const { check } = require("express-validator");
 
-// Import controllers
 const {
   getGoals,
-  renderAddGoalForm,
   addGoal,
   shareGoal,
   renderShareGoalPage,
