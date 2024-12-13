@@ -7,52 +7,35 @@ const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
+    // Create a new user in the database
+    const user = await User.create({ username, email, password });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({ username, email, password: hashedPassword });
-    await newUser.save();
-
+    // Optionally, you can send a success message to the view (e.g., registration successful)
     res.status(201).redirect("/api/auth/login");
   } catch (err) {
-    res.status(500).json({ err: "Error registering user" });
+    // If there was an error, render the login page with an error message
+    res.render("login", { error: "Error registering user. Please try again." });
   }
 };
 
-// Login User
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "User not found " });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-    // Generate JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
 
-    // Set the token as a cookie (for client-side access)
-    res.cookie("authToken", token, {
-      httpOnly: false, //
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    // Redirect to home or another page after successful login
     res.redirect("/");
   } catch (err) {
-    console.error("Error logging in user:", err);
     res.status(500).json({ err: "Error logging in user" });
   }
 };
-
 // Forgot Password
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
